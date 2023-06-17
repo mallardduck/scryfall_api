@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart' as dio_lib;
 import 'package:scryfall_api/scryfall_api.dart';
 
 /// {@template scryfall_api_client}
@@ -10,27 +10,27 @@ import 'package:scryfall_api/scryfall_api.dart';
 class ScryfallApiClient {
   static const _baseUrl = 'api.scryfall.com';
 
-  final http.Client _httpClient;
+  final dio_lib.Dio _dio;
 
   /// {@macro scryfall_api_client}
-  ScryfallApiClient({http.Client? httpClient})
-      : _httpClient = httpClient ?? http.Client();
+  ScryfallApiClient({dio_lib.Dio? dio})
+      : _dio = dio ?? dio_lib.Dio();
 
   /// Closes the connection to the Scryfall server.
   ///
   /// Any subsequent use of this instance is invalid
-  /// and results in a [http.ClientException].
+  /// and results in a [dio_lib.DioException].
   ///
-  /// This method closes the underlying [http.Client].
-  /// Therefore, if a [http.Client] was provided when
+  /// This method closes the underlying [dio_lib.Dio].
+  /// Therefore, if a [dio_lib.Dio] was provided when
   /// creating the [ScryfallApiClient], closing that
-  /// [http.Client] is equivalent to calling this method.
+  /// [dio_lib.Dio] is equivalent to calling this method.
   ///
   /// It's important to close each client when it's
   /// done being used; failing to do so can cause
   /// the Dart process to hang.
   void close() {
-    _httpClient.close();
+    _dio.close();
   }
 
   /// **GET** /sets
@@ -38,9 +38,9 @@ class ScryfallApiClient {
   /// Returns a [PaginableList] of all [MtgSet]s on Scryfall.
   Future<PaginableList<MtgSet>> getAllSets() async {
     final url = Uri.https(_baseUrl, '/sets');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -59,9 +59,9 @@ class ScryfallApiClient {
   /// for the set.
   Future<MtgSet> getSetByCode(String code) async {
     final url = Uri.https(_baseUrl, '/sets/$code');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -77,9 +77,9 @@ class ScryfallApiClient {
   /// [TCGPlayer's API](https://docs.tcgplayer.com/docs).
   Future<MtgSet> getSetByTcgplayerId(int tcgplayerId) async {
     final url = Uri.https(_baseUrl, '/sets/tcgplayer/$tcgplayerId');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -93,9 +93,9 @@ class ScryfallApiClient {
   /// Returns a [MtgSet] with the given [id].
   Future<MtgSet> getSetById(String id) async {
     final url = Uri.https(_baseUrl, '/sets/$id');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -170,9 +170,9 @@ class ScryfallApiClient {
         'page': page?.toString(),
       }..removeWhere((_, value) => value == null),
     );
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -213,9 +213,9 @@ class ScryfallApiClient {
         'set': set,
       }..removeWhere((_, value) => value == null),
     );
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -270,14 +270,14 @@ class ScryfallApiClient {
         'version': imageVersion?.json,
       }..removeWhere((_, value) => value == null),
     );
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
     if (response.statusCode != 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final json = response.data as Map<String, dynamic>;
       throw ScryfallException.fromJson(json);
     }
 
-    return response.bodyBytes;
+    return response.data;
   }
 
   /// **GET** /cards/autocomplete
@@ -315,9 +315,9 @@ class ScryfallApiClient {
         'include_extras': includeExtras?.toString(),
       }..removeWhere((_, value) => value == null),
     );
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -343,9 +343,9 @@ class ScryfallApiClient {
         'q': query,
       }..removeWhere((_, value) => value == null),
     );
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -382,14 +382,14 @@ class ScryfallApiClient {
         'version': imageVersion?.json,
       }..removeWhere((_, value) => value == null),
     );
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
     if (response.statusCode != 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final json = response.data as Map<String, dynamic>;
       throw ScryfallException.fromJson(json);
     }
 
-    return response.bodyBytes;
+    return response.data;
   }
 
   /// **POST** /cards/collection
@@ -404,16 +404,19 @@ class ScryfallApiClient {
     List<CardIdentifier> identifiers,
   ) async {
     final url = Uri.https(_baseUrl, '/cards/collection');
-    final body = jsonEncode({
-      'identifiers': identifiers.map((i) => i.toJson()).toList(),
-    });
-    final response = await _httpClient.post(
+    final response = await _dio.postUri(
       url,
-      body: body,
-      headers: {'Content-Type': 'application/json'},
+      data: {
+        'identifiers': identifiers.map((i) => i.toJson()).toList(),
+      },
+      options: dio_lib.Options(
+        headers: {
+          dio_lib.Headers.contentTypeHeader: 'application/json'
+        }
+      ),
     );
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -448,9 +451,9 @@ class ScryfallApiClient {
       _baseUrl,
       '/cards/$setCode/$collectorNumber${language != null ? '/${language.json}' : ''}',
     );
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -489,14 +492,14 @@ class ScryfallApiClient {
         'version': imageVersion?.json,
       }..removeWhere((_, value) => value == null),
     );
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
     if (response.statusCode != 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final json = response.data as Map<String, dynamic>;
       throw ScryfallException.fromJson(json);
     }
 
-    return response.bodyBytes;
+    return response.data;
   }
 
   /// **GET** /cards/multiverse/:id
@@ -507,9 +510,9 @@ class ScryfallApiClient {
   /// find either of them.
   Future<MtgCard> getCardByMultiverseId(int multiverseId) async {
     final url = Uri.https(_baseUrl, '/cards/multiverse/$multiverseId');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -542,14 +545,14 @@ class ScryfallApiClient {
         'version': imageVersion?.json,
       }..removeWhere((_, value) => value == null),
     );
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
     if (response.statusCode != 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final json = response.data as Map<String, dynamic>;
       throw ScryfallException.fromJson(json);
     }
 
-    return response.bodyBytes;
+    return response.data;
   }
 
   /// **GET** /cards/mtgo/:id
@@ -560,9 +563,9 @@ class ScryfallApiClient {
   /// The ID can either be the card’s `mtgo_id` or its `mtgo_foil_id`.
   Future<MtgCard> getCardByMtgoId(int mtgoId) async {
     final url = Uri.https(_baseUrl, '/cards/mtgo/$mtgoId');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -595,14 +598,14 @@ class ScryfallApiClient {
         'version': imageVersion?.json,
       },
     );
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
     if (response.statusCode != 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final json = response.data as Map<String, dynamic>;
       throw ScryfallException.fromJson(json);
     }
 
-    return response.bodyBytes;
+    return response.data;
   }
 
   /// **GET** /cards/arena/:id
@@ -611,9 +614,9 @@ class ScryfallApiClient {
   /// (Magic: The Gathering Arena ID).
   Future<MtgCard> getCardByArenaId(int arenaId) async {
     final url = Uri.https(_baseUrl, '/cards/arena/$arenaId');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -644,14 +647,14 @@ class ScryfallApiClient {
         'version': imageVersion?.json,
       },
     );
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
     if (response.statusCode != 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final json = response.data as Map<String, dynamic>;
       throw ScryfallException.fromJson(json);
     }
 
-    return response.bodyBytes;
+    return response.data;
   }
 
   /// **GET** /cards/tcgplayer/:id
@@ -661,9 +664,9 @@ class ScryfallApiClient {
   /// on [TCGplayer’s API](https://docs.tcgplayer.com/docs).
   Future<MtgCard> getCardByTcgplayerId(int tcgplayerId) async {
     final url = Uri.https(_baseUrl, '/cards/tcgplayer/$tcgplayerId');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -695,14 +698,14 @@ class ScryfallApiClient {
         'version': imageVersion?.json,
       },
     );
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
     if (response.statusCode != 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final json = response.data as Map<String, dynamic>;
       throw ScryfallException.fromJson(json);
     }
 
-    return response.bodyBytes;
+    return response.data;
   }
 
   /// **GET** /cards/cardmarket/:id
@@ -712,9 +715,9 @@ class ScryfallApiClient {
   /// Cardmarket’s APIs.
   Future<MtgCard> getCardByCardmarketId(int cardmarketId) async {
     final url = Uri.https(_baseUrl, '/cards/cardmarket/$cardmarketId');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -746,14 +749,14 @@ class ScryfallApiClient {
         'version': imageVersion?.json,
       },
     );
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
     if (response.statusCode != 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final json = response.data as Map<String, dynamic>;
       throw ScryfallException.fromJson(json);
     }
 
-    return response.bodyBytes;
+    return response.data;
   }
 
   /// **GET** /cards/:id
@@ -761,9 +764,9 @@ class ScryfallApiClient {
   /// Returns a single card with the given [id] on Scryfall.
   Future<MtgCard> getCardById(String id) async {
     final url = Uri.https(_baseUrl, '/cards/$id');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -793,14 +796,14 @@ class ScryfallApiClient {
         'version': imageVersion?.json,
       },
     );
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
     if (response.statusCode != 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final json = response.data as Map<String, dynamic>;
       throw ScryfallException.fromJson(json);
     }
 
-    return response.bodyBytes;
+    return response.data;
   }
 
   /// **GET** /cards/multiverse/:id/rulings
@@ -814,9 +817,9 @@ class ScryfallApiClient {
     int multiverseId,
   ) async {
     final url = Uri.https(_baseUrl, '/cards/multiverse/$multiverseId/rulings');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -836,9 +839,9 @@ class ScryfallApiClient {
   /// The [mtgoId] can either be the card’s `mtgo_id` or its `mtgo_foil_id`.
   Future<PaginableList<Ruling>> getRulingsByMtgoId(int mtgoId) async {
     final url = Uri.https(_baseUrl, '/cards/mtgo/$mtgoId/rulings');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -856,9 +859,9 @@ class ScryfallApiClient {
   /// fiven [arenaId] (Magic: The Gathering Arena ID).
   Future<PaginableList<Ruling>> getRulingsByArenaId(int arenaId) async {
     final url = Uri.https(_baseUrl, '/cards/arena/$arenaId/rulings');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -882,9 +885,9 @@ class ScryfallApiClient {
       _baseUrl,
       '/cards/$setCode/$collectorNumber/rulings',
     );
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -902,9 +905,9 @@ class ScryfallApiClient {
   /// given [id] on Scryfall.
   Future<PaginableList<Ruling>> getRulingsById(String id) async {
     final url = Uri.https(_baseUrl, '/cards/$id/rulings');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -921,9 +924,9 @@ class ScryfallApiClient {
   /// Returns a [PaginableList] of all [CardSymbol]s.
   Future<PaginableList<CardSymbol>> getAllCardSymbols() async {
     final url = Uri.https(_baseUrl, '/symbology');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -950,9 +953,9 @@ class ScryfallApiClient {
       '/symbology/parse-mana',
       <String, String>{'cost': manaCost},
     );
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -968,9 +971,9 @@ class ScryfallApiClient {
   /// [catalogType]\: The type of catalog that shall be returned.
   Future<Catalog> getCatalog(CatalogType catalogType) async {
     final url = Uri.https(_baseUrl, '/catalog/${catalogType.urlEncoding}');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -1083,9 +1086,9 @@ class ScryfallApiClient {
   /// Returns a [PaginableList] of all [BulkData] on Scryfall.
   Future<PaginableList<BulkData>> getBulkData() async {
     final url = Uri.https(_baseUrl, '/bulk-data');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -1102,9 +1105,9 @@ class ScryfallApiClient {
   /// Returns a single [BulkData] object with the given [id].
   Future<BulkData> getBulkDataById(String id) async {
     final url = Uri.https(_baseUrl, '/bulk-data/$id');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -1119,14 +1122,14 @@ class ScryfallApiClient {
   /// as a [Uint8List].
   Future<Uint8List> getBulkDataByIdAsFile(String id) async {
     final url = Uri.https(_baseUrl, '/bulk-data/$id', {'format': 'file'});
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
     if (response.statusCode != 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final json = response.data as Map<String, dynamic>;
       throw ScryfallException.fromJson(json);
     }
 
-    return response.bodyBytes;
+    return response.data;
   }
 
   /// **GET** /bulk-data/:type
@@ -1134,9 +1137,9 @@ class ScryfallApiClient {
   /// Returns a single [BulkData] object with the given [type].
   Future<BulkData> getBulkDataByType(BulkDataType type) async {
     final url = Uri.https(_baseUrl, '/bulk-data/${type.urlEncoding}');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -1155,14 +1158,14 @@ class ScryfallApiClient {
       '/bulk-data/${type.urlEncoding}',
       {'format': 'file'},
     );
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
     if (response.statusCode != 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final json = response.data as Map<String, dynamic>;
       throw ScryfallException.fromJson(json);
     }
 
-    return response.bodyBytes;
+    return response.data;
   }
 
   /// **GET** /bulk-data/oracle-cards?format=file
@@ -1240,9 +1243,9 @@ class ScryfallApiClient {
   /// Returns a [PaginableList] of all [Migration]s on Scryfall.
   Future<PaginableList<Migration>> getMigrations() async {
     final url = Uri.https(_baseUrl, '/migrations');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
@@ -1259,9 +1262,9 @@ class ScryfallApiClient {
   /// Returns a [Migration] with the given id.
   Future<Migration> getMigration(String id) async {
     final url = Uri.https(_baseUrl, '/migrations/$id');
-    final response = await _httpClient.get(url);
+    final response = await _dio.getUri(url);
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = response.data as Map<String, dynamic>;
 
     if (response.statusCode != 200) {
       throw ScryfallException.fromJson(json);
